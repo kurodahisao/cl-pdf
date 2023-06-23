@@ -1,5 +1,23 @@
 # -*- mode:org; coding:cp932 -*-
 * CL-PDF using extended version of zpb-ttf.
+** Get zpb-ttf-extension
+#+BEGIN_SRC
+$ cd ~/projects
+$ git clone https://github.com/kurodahisao/zpb-ttf2
+$ git clone https://github.com/kurodahisao/cl-pdf
+$ sbcl
+CL-USER> (load "~/projects/github/zpb-ttf2/zpb-ttf2.asd")
+T
+CL-USER> (asdf:load-system :zpb-ttf2)
+T
+CL-USER> (load "~/quicklisp/setup.lisp")
+T
+CL-USER> (load "~/projects/github/cl-pdf/ipa-font.asd")
+T
+CL-USER> (asdf:load-system :ipa-font)
+T
+#+END_SRC
+
 #+BEGIN_SRC
 Install IPA Fonts via https://moji.or.jp/ipafont/ipa00303/
 See https://github.com/archimag/cl-pdf/blob/master/unicode-readme.txt
@@ -7,6 +25,8 @@ See https://github.com/archimag/cl-pdf/blob/master/unicode-readme.txt
 $ c:/Users/kuroda/Dropbox/honda/ttf2pt1/ttf2pt1.exe -a -F c:/Windows/Fonts/ipam.ttf ipam
 or If you on a Linux platform, Download both ufm & ttf via ...
 $ sbcl
+CL-USER> (in-package pdf)
+#<PACKAGE "PDF">
 PDF> (load-ipa-font "ipam.ufm" "/usr/share/fonts/ipam.ttf")
 #<TTU-FONT-METRICS IPAMincho @ #x101cf7e22>
 PDF> (get-font "IPAMincho")
@@ -23,5 +43,4 @@ PDF> (pdf2text "tmp.pdf")
 ;; Inside inflate-file
 #<HASH-TABLE :TEST EQL :COUNT 1 {10024E5E83}>
 ("うゐのおくやまけふこえて色は匂へど散りぬるを淺き夢見じ醉ひもせずあさきゆめみしゑひもせすわかよたれそつねならむ....")
-PDF> 
 #+END_SRC
