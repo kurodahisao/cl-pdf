@@ -10,6 +10,9 @@ CL-USER> (load "~/projects/github/zpb-ttf2/zpb-ttf2.asd")
 T
 CL-USER> (asdf:load-system :zpb-ttf2)
 T
+#+END_SRC
+** Load System ipa-font with cl-pdf
+#+BEGIN_SRC
 CL-USER> (load "~/quicklisp/setup.lisp")
 T
 CL-USER> (load "~/projects/github/cl-pdf/ipa-font.asd")
@@ -17,13 +20,13 @@ T
 CL-USER> (asdf:load-system :ipa-font)
 T
 #+END_SRC
-
+** Run Examples
 #+BEGIN_SRC
 Install IPA Fonts via https://moji.or.jp/ipafont/ipa00303/
 See https://github.com/archimag/cl-pdf/blob/master/unicode-readme.txt
 # unzip http://www.fractalconcept.com/fcweb/download/ttf2pt1.zip
 $ c:/Users/kuroda/Dropbox/honda/ttf2pt1/ttf2pt1.exe -a -F c:/Windows/Fonts/ipam.ttf ipam
-or If you on a Linux platform, Download both ufm & ttf via ...
+or If you on a Linux platform, Download both ufm & ttf via https://drive.proton.me/urls/13H5YBJ8E4#ZIKyxcEtKyDm
 $ sbcl
 CL-USER> (in-package pdf)
 #<PACKAGE "PDF">
