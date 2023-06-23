@@ -1,0 +1,27 @@
+# -*- mode:org; coding:cp932 -*-
+* CL-PDF using extended version of zpb-ttf.
+#+BEGIN_SRC
+Install IPA Fonts via https://moji.or.jp/ipafont/ipa00303/
+See https://github.com/archimag/cl-pdf/blob/master/unicode-readme.txt
+# unzip http://www.fractalconcept.com/fcweb/download/ttf2pt1.zip
+$ c:/Users/kuroda/Dropbox/honda/ttf2pt1/ttf2pt1.exe -a -F c:/Windows/Fonts/ipam.ttf ipam
+or If you on a Linux platform, Download both ufm & ttf via ...
+$ sbcl
+PDF> (load-ipa-font "ipam.ufm" "/usr/share/fonts/ipam.ttf")
+#<TTU-FONT-METRICS IPAMincho @ #x101cf7e22>
+PDF> (get-font "IPAMincho")
+#<FONT ipamincho @ #x102d96872>
+PDF> (jexample)
+#P"tmp.pdf"
+PDF> (with-open-file (s "tmp.pdf") (file-length s))
+6479989
+PDF> (remove-embedded-fonts "tmp.pdf" "tmp2.pdf")
+#P"tmp2.pdf"
+PDF> (with-open-file (s "tmp2.pdf") (file-length s))
+6610
+PDF> (pdf2text "tmp.pdf")
+;; Inside inflate-file
+#<HASH-TABLE :TEST EQL :COUNT 1 {10024E5E83}>
+("‚¤‚î‚Ì‚¨‚­‚â‚Ü‚¯‚Ó‚±‚¦‚ÄF‚Í“õ‚Ö‚ÇŽU‚è‚Ê‚é‚ðŸÇ‚«–²Œ©‚¶çË‚Ð‚à‚¹‚¸‚ ‚³‚«‚ä‚ß‚Ý‚µ‚ï‚Ð‚à‚¹‚·‚í‚©‚æ‚½‚ê‚»‚Â‚Ë‚È‚ç‚Þ....")
+PDF> 
+#+END_SRC
