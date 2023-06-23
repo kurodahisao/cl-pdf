@@ -22,4 +22,4 @@
   :description "CL-PDF IPA Font Extension"
   :long-description "CL-PDF Extension for IPA Font Manipulation"
   :components ((:file "ipa-font" :depends-on () :encoding :cp932))
-  :depends-on (:asdf-encodings :cl-pdf-parser :babel :cl-ppcre :flexi-streams :deflate :salza2))
+  :depends-on (:asdf-encodings :zpb-ttf2 :cl-pdf-parser :babel :cl-ppcre :flexi-streams :deflate :salza2))

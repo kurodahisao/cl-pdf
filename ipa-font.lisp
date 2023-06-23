@@ -501,10 +501,10 @@ CL-PDF(352): (jexample)
           do (let* ((inflate (inflate-fontfile2 fontobj))
                     (font-loader        ; 現行のFontFile2を一旦loadし、
                      (with-input-from-buffer (input inflate)
-                       (zpb-ttf:open-font-loader-from-stream input))))
+                       (zpb-ttf2:open-font-loader-from-stream input))))
                ;; 不要なtableを除いてdumpしてから、
                (with-open-file (stream temp :direction :io :if-exists :supersede)
-                 (zpb-ttf:dump-font-loader-to-stream font-loader stream table-name-list))
+                 (zpb-ttf2:dump-font-loader-to-stream font-loader stream table-name-list))
                ;; 新たなFontFile2として設置しなほす
                (with-open-file (stream temp)
                  (let ((sequence (make-array (file-length stream) :element-type '(unsigned-byte 8))))
@@ -579,16 +579,16 @@ CL-PDF(352): (jexample)
           for basefont = (font-basefont fontobj)
           when (and (string= font-encoding encoding)
                     (search basefont-name basefont))
-          do (let* ((zpb-ttf:*dump-character-list*
+          do (let* ((zpb-ttf2:*dump-character-list*
                      ;; Find the font using the same fontfile2 and unify the associated text
                      (collect-charset-using-the-font fontobj text font-text-hash-table))
                     (font-loader (with-open-file (input font-file)
-                                   (zpb-ttf:open-font-loader-from-stream input)))
+                                   (zpb-ttf2:open-font-loader-from-stream input)))
                     (font-metrics (gethash (string-downcase basefont-name) *font-metrics*))
-                    (c2g (make-c2g-subset-seq font-metrics zpb-ttf:*dump-character-list*)))
+                    (c2g (make-c2g-subset-seq font-metrics zpb-ttf2:*dump-character-list*)))
                ;; subset化されたttfファイルをtempにdumpして、
                (with-open-file (stream temp :direction :io :if-exists :supersede)
-                 (zpb-ttf:dump-font-loader-to-stream font-loader stream table-name-list))
+                 (zpb-ttf2:dump-font-loader-to-stream font-loader stream table-name-list))
                ;; tempの内容をFontFile2として設置しなほす
                (with-open-file (stream temp)
                  (let ((sequence (make-array (file-length stream) :element-type '(unsigned-byte 8))))
@@ -1117,7 +1117,7 @@ CL-PDF(352): (jexample)
       (#\/ t)
       (t nil)))
 
-#+ignore
+#-allegro
 (defmacro unread-byte (stream) nil)
 
 (defun pseudo-read-byte (stream error-p eof-value)
