@@ -12,9 +12,6 @@
   #+allegro
   (:import-from "SYS" "MAKE-TEMP-FILE-NAME"))
 
-(eval-when (:load-toplevel :compile-toplevel :execute)
-  (pushnew :use-salza2-zlib *features*))
-
 (defsystem :ipa-font
   :name "cl-pdf-ipa-font"
   :author "KURODA Hisao <littlelisper@pm.me>"

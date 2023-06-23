@@ -268,6 +268,10 @@ CL-PDF(352): (jexample)
             (code-char (ldb (byte 8 0) gid))))
       finally (return c2g)))
 
+(defun load-zlib (&optional force)
+  (declare (ignore force))
+  (setf *compress-streams* t))
+
 (defparameter +octets+ #+allegro :octets #-allegro :latin-1)
 (defparameter +cp932+ #+allegro :932 #-allegro :cp932)
 
@@ -317,6 +321,9 @@ CL-PDF(352): (jexample)
               (loop for pos = 0 then (write-vector buffer deflate :start pos :end bytes)
                   until (>= pos bytes)))
 	(close deflate)))))             ; finish compression
+
+(eval-when (:load-toplevel :execute)
+  (load-zlib))
 
 ;;;
 ;;; Remove Embedded FontFile2
@@ -1118,7 +1125,7 @@ CL-PDF(352): (jexample)
       (t nil)))
 
 #-allegro
-(defmacro unread-byte (stream) nil)
+(defmacro unread-byte (stream) (declare (ignore stream)) nil)
 
 (defun pseudo-read-byte (stream error-p eof-value)
   #+allegro (read-byte stream error-p eof-value)
