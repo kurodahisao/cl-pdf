@@ -13,8 +13,9 @@ T
 #+END_SRC
 ** Load System ipa-font with cl-pdf
 #+BEGIN_SRC
-CL-USER> (load "~/quicklisp/setup.lisp")
-T
+CL-USER> (ql:quickload :cl-pdf)
+....
+(:CL-PDF)
 CL-USER> (load "~/projects/github/cl-pdf/ipa-font.asd")
 T
 CL-USER> (asdf:load-system :ipa-font)
@@ -34,13 +35,13 @@ PDF> (load-ipa-font "ipam.ufm" "/usr/share/fonts/ipam.ttf")
 #<TTU-FONT-METRICS IPAMincho @ #x101cf7e22>
 PDF> (get-font "IPAMincho")
 #<FONT ipamincho @ #x102d96872>
-PDF> (jexample)
+PDF> (jexample)      ; definition is commented out at the end of ipa-font.lisp
 #P"tmp.pdf"
-PDF> (with-open-file (s "tmp.pdf") (file-length s))
+PDF> (with-open-file (s *) (file-length s))
 6479989
 PDF> (remove-embedded-fonts "tmp.pdf" "tmp2.pdf")
 #P"tmp2.pdf"
-PDF> (with-open-file (s "tmp2.pdf") (file-length s))
+PDF> (with-open-file (s *) (file-length s))
 6610
 PDF> (pdf2text "tmp.pdf")
 ;; Inside inflate-file
