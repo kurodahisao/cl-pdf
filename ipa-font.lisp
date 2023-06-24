@@ -1124,12 +1124,10 @@ CL-PDF(352): (jexample)
       (#\/ t)
       (t nil)))
 
-#-allegro
-(defmacro unread-byte (stream) (declare (ignore stream)) nil)
-
 (defun pseudo-read-byte (stream error-p eof-value)
   #+allegro (read-byte stream error-p eof-value)
-  #-allegro (flexi-streams:peek-byte stream error-p eof-value))
+  #-allegro (prog1 (flexi-streams:peek-byte stream error-p eof-value) 
+              (read-byte stream error-p eof-value)))
 
 (defun read-stream-token (stream)
   (let ((c (loop for c = (or (read-byte stream nil nil)
@@ -1148,10 +1146,8 @@ CL-PDF(352): (jexample)
              if (null byte) do
                (return string)
              else if (or (white-char-p c) (key-char-p c)) do
-               (unread-byte stream)
                (return string) 
              else do
-                  (read-byte stream)    ; skip
                   (vector-push-extend c string))))))
 
 ;;;;

@@ -35,7 +35,7 @@ PDF> (load-ipa-font "ipam.ufm" "/usr/share/fonts/ipam.ttf")
 #<TTU-FONT-METRICS IPAMincho @ #x101cf7e22>
 PDF> (get-font "IPAMincho")
 #<FONT ipamincho @ #x102d96872>
-PDF> (jexample)      ; definition is commented out at the end of ipa-font.lisp
+PDF> (jexample)    ; definition commented out at the end of ipa-font.lisp
 #P"tmp.pdf"
 PDF> (with-open-file (s *) (file-length s))
 6479989
