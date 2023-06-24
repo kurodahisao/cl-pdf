@@ -701,9 +701,9 @@ CL-PDF(352): (jexample)
                                  ((search "UTF16" encoding)
                                   (read-texts-as-ucs-string texts))
                                  ((or (search "WinAnsi" encoding) (search "RKSJ" encoding))
-                                  (read-texts-as-plain-text texts +cp932+))
+                                  (read-texts-as-plain-text texts :cp932)) ; call babel
                                  ((or (null encoding) (string= encoding "/StandardEncoding"))
-                                  (read-texts-as-plain-text texts +cp932+))
+                                  (read-texts-as-plain-text texts :cp932)) ; call babel
                                  ((and (null encoding) (not (null tounicode)))
                                   (read-texts-as-cid-string texts tounicode))
                                  (t (error "Unknown Pattern of Encoding ~A and ToUnicode ~A" encoding tounicode)))))
@@ -948,7 +948,7 @@ CL-PDF(352): (jexample)
                        descendantfonts)))
     (assert (or (null font-array) (= 1 (length font-array)))
         (font-array) "Not Supported multiple descendantfonts. ~A" font-array)
-    (loop for df across font-array
+    (loop for df across (or font-array #())
         for cidsysteminfo = (descendant-cidsysteminfo df)
         thereis (cidsysteminfo-ordering cidsysteminfo))))
 
@@ -1062,14 +1062,14 @@ CL-PDF(352): (jexample)
 
 (defun read-pdf-code-string (stream)
   (loop with string = (make-array 1  :initial-element #\< :element-type 'character :fill-pointer t :adjustable t)
-      for c = (code-char (read-byte stream))
+      for c = (code-char (pseudo-read-byte stream))
       until (eql c #\>) do
         (vector-push-extend c string)
       finally (progn (vector-push-extend #\> string)
                      (return string))))
 
 (defun read-byte-char (stream)
-  (code-char (read-byte stream)))
+  (code-char (pseudo-read-byte stream)))
 
 (defun read-pdf-char-string (stream)
   (loop with string = (make-array 1 :element-type 'character :initial-element #\( :fill-pointer t :adjustable t)
@@ -1110,7 +1110,7 @@ CL-PDF(352): (jexample)
 
 (defun read-pdf-name (stream)
   (loop with string = (make-array 1 :initial-element #\/ :element-type 'character :fill-pointer t :adjustable t)
-      for c = (code-char (read-byte stream))
+      for c = (code-char (pseudo-read-byte stream))
       until (white-char-p c) do
         (vector-push-extend c string)
       finally (return string)))
@@ -1124,13 +1124,23 @@ CL-PDF(352): (jexample)
       (#\/ t)
       (t nil)))
 
-(defun pseudo-read-byte (stream error-p eof-value)
+#-allegro
+(defvar *unread-byte* nil)
+#-allegro
+(defvar *read-byte* nil)
+#-allegro
+(defun unread-byte (stream)
+  (declare (ignore stream))
+  (setq *unread-byte* *read-byte*))
+
+(defun pseudo-read-byte (stream &optional error-p eof-value)
   #+allegro (read-byte stream error-p eof-value)
-  #-allegro (prog1 (flexi-streams:peek-byte stream error-p eof-value) 
-              (read-byte stream error-p eof-value)))
+  #-allegro (if (null *unread-byte*)
+                (setq *read-byte* (read-byte stream error-p eof-value))
+                (prog1 *unread-byte* (setq *unread-byte* nil))))
 
 (defun read-stream-token (stream)
-  (let ((c (loop for c = (or (read-byte stream nil nil)
+  (let ((c (loop for c = (or (pseudo-read-byte stream nil nil)
                              (return-from read-stream-token nil))
                while (white-char-p (code-char c))
                finally (return c))))
@@ -1146,6 +1156,7 @@ CL-PDF(352): (jexample)
              if (null byte) do
                (return string)
              else if (or (white-char-p c) (key-char-p c)) do
+               (unread-byte stream)
                (return string) 
              else do
                   (vector-push-extend c string))))))
