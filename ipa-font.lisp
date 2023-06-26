@@ -693,11 +693,14 @@ CL-PDF(352): (jexample)
                    (loop for basename in basefont-names
                        thereis (search basename basefont)))
           do (let ((string (cond ((search "Identity" encoding)
-                                  (if (not (null tounicode))
-                                      (read-texts-as-cid-string texts tounicode)
-                                    (if (search "UCS" ordering)
-                                        (read-texts-as-ucs-string texts)
-                                      (error "Unknown Ordering ~A when Encoding is ~A." ordering encoding))))
+                                  (cond ((not (null tounicode))
+                                         (read-texts-as-cid-string texts tounicode))
+                                        ((search "UCS" ordering)
+                                         (read-texts-as-ucs-string texts))
+                                        ((search "Japan1" ordering)
+                                         (read-texts-as-japan1-string texts))
+                                        (t
+                                         (error "Unknown Ordering ~A when Encoding is ~A." ordering encoding))))
                                  ((search "UTF16" encoding)
                                   (read-texts-as-ucs-string texts))
                                  ((or (search "WinAnsi" encoding) (search "RKSJ" encoding))
@@ -717,7 +720,30 @@ CL-PDF(352): (jexample)
   (let ((value (gethash font hashtable)))
     (when (listp value)
       (setq value (apply #'concatenate 'string value)))
+    (if (or (equal value '(nil)) (equal string '(nil))) (error "NIL"))
     (setf (gethash font hashtable) (concatenate 'string value string))))
+
+(defun read-texts-as-japan1-string (texts)
+  (if (listp texts)
+      (loop for text in texts
+            for string = (read-texts-as-japan1-string text)
+            unless (null string) collect string)
+      (let* ((byte-list (loop with <> = nil
+                              for char across texts
+                              if (eql #\< char) do
+                                (setq <> t)
+                              else if (eql #\> char) do
+                                (setq <> nil)
+                              else if (not (null <>)) collect char into hex
+                                     else do (continue)
+                              finally (return hex)))
+             (codes (loop for list on byte-list by #'cddddr
+                          for num = (loop for char in list repeat 4 collect char)
+                          collect (read-from-string (format nil "#x~{~A~}" num))))
+             (chars (loop for code in codes
+                          for char = (adobe-japan1-to-unicode code)
+                          unless (null char) collect char)))
+        chars)))
 
 (defun ucs-octets-to-plain-text (octets)
   (loop with string = (make-array 0 :element-type 'character :fill-pointer t :adjustable t)
