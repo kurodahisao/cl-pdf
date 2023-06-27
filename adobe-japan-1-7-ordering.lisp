@@ -10216,7 +10216,8 @@
     (23049 KANJI HR6D C54) (23050 KANJI HR6D C56) (23051 KANJI HR6D C57)
     (23052 KANJI HR6D C58) (23053 KANJI HR6D C5A) (23054 KANJI HR6D C5B)
     (23055 KANJI HR6D C5D) (23056 KANJI HR6D C60) (23057 KANJI HR6D C62)
-    (23058 KANJI KANJISYMBOL REIWA) (23059 KANJI KANJISUPP REIWAVERT)))
+    (23058 KANJI KANJISYMBOL REIWA) (23059 KANJI KANJISUPP REIWAVERT))
+  "https://github.com/adobe-type-tools/Adobe-Japan1")
 
 (defparameter +jisx0213-2004-8bit-std+
   '((8481 12288 "IDEOGRAPHIC SPACE") (8482 12289 "IDEOGRAPHIC COMMA")
@@ -15232,7 +15233,8 @@
     (65264 10848 " <cjk>	[2000]	[Unicode3.1]") (65265 40809 "<cjk>	[2000]")
     (65266 10849 " <cjk>	[2000]	[Unicode3.1]") (65267 40813 "<cjk>	[2000]")
     (65268 40816 "<cjk>	[2000]") (65269 40821 "<cjk>	[2000]")
-    (65270 10859 " <cjk>	[2000]	[Unicode3.1]")))
+    (65270 10859 " <cjk>	[2000]	[Unicode3.1]"))
+  "https://x0213.org/codetable/jisx0213-2004-8bit-std.txt")
 
 (defparameter +kana-table+
   '((SMALLA #\‚Ÿ #\ƒ@)
@@ -15366,8 +15368,10 @@
                 (t (warn "~A ~A ~A" key1 key2 key3)))))
 
 
-#+ignore
+#||
+
 (defun adobe-japan1-7-ordering (file)
+  "https://github.com/adobe-type-tools/Adobe-Japan1"
   (with-open-file (s file)
     (loop for line = (read-line s nil nil)
           while line
@@ -15377,20 +15381,18 @@
                 while token
                 collect (progn (setq start pos) token)))))
 
-#+ignore
 (defun hiragana ()
   (coerce (loop for code from (char-code #\‚Ÿ) to (+ 3 (char-code #\‚ñ))
                 collect (code-char code))
           'string))
 
-#+ignore
 (defun katakana ()
   (coerce (loop for code from (char-code #\ƒ@) to (+ 3 (char-code #\ƒ“))
                 collect (code-char code))
           'string))
 
-#+ignore
 (defun read-jisx0213-2004-8bit-std (file)
+  "https://x0213.org/codetable/jisx0213-2004-8bit-std.txt"
   (with-open-file (s file)
     (loop for line = (read-line s nil nil)
        while line
@@ -15398,3 +15400,5 @@
        else collect (let ((*read-base* 16))
                       (list (read-from-string line nil nil :start 2 :end 6)
                             (read-from-string line nil nil :start 9 :end 13) (subseq line 16))))))
+
+||#
