@@ -697,10 +697,8 @@ CL-PDF(352): (jexample)
                                          (read-texts-as-cid-string texts tounicode))
                                         ((search "UCS" ordering)
                                          (read-texts-as-ucs-string texts))
-                                        ((search "Japan1" ordering)
+                                        ((or (search "Japan1" ordering) (search "Identity" ordering))
                                          (read-texts-as-japan1-string texts))
-                                        ((search "Identity" ordering)
-                                         (warn "Unknown Ordering ~A when Encoding is ~A. ~A" ordering encoding texts))
                                         (t
                                          (error "Unknown Ordering ~A when Encoding is ~A." ordering encoding))))
                                  ((search "UTF16" encoding)
@@ -725,26 +723,40 @@ CL-PDF(352): (jexample)
     (setf (gethash font hashtable) (concatenate 'string value string))))
 
 (defun read-texts-as-japan1-string (texts)
-  (if (listp texts)
-      (loop for text in texts
-            for string = (read-texts-as-japan1-string text)
-            unless (null string) collect string)
-      (let* ((byte-list (loop with <> = nil
-                              for char across texts
-                              if (eql #\< char) do
-                                (setq <> t)
-                              else if (eql #\> char) do
-                                (setq <> nil)
-                              else if (not (null <>)) collect char into hex
-                                     else do (continue)
-                              finally (return hex)))
-             (codes (loop for list on byte-list by #'cddddr
-                          for num = (loop for char in list repeat 4 collect char)
-                          collect (read-from-string (format nil "#x~{~A~}" num))))
-             (chars (loop for code in codes
-                          for char = (adobe-japan1-to-unicode code)
-                          unless (null char) collect char)))
-        chars)))
+  (cond ((listp texts)
+         (loop for text in texts
+             for string = (read-texts-as-japan1-string text)
+             unless (null string) collect string))
+        ((and (find #\< texts) (find #\> texts))
+         (let* ((byte-list (loop with <> = nil
+                               for char across texts
+                               if (eql #\< char) do
+                                 (setq <> t)
+                               else if (eql #\> char) do
+                                 (setq <> nil)
+                               else if (not (null <>)) collect char into hex
+                               else do (continue)
+                               finally (return hex)))
+                (codes (loop for list on byte-list by #'cddddr
+                           for num = (loop for char in list repeat 4 collect char)
+                           collect (read-from-string (format nil "#x~{~A~}" num))))
+                (chars (loop for code in codes
+                           for char = (adobe-japan1-to-unicode code)
+                           unless (null char) collect char)))
+           chars))
+        ((and (find #\( texts) (find #\) texts)) ; "(\nK)"
+         (let* ((code (loop with <> = nil and hex = 0
+                          for char across texts
+                          if (eql #\( char) do
+                            (setq <> t)
+                          else if (eql #\) char) do
+                            (setq <> nil)
+                          else if (not (null <>)) do
+                            (setq hex (+ (* 256 hex) (char-code char)))
+                          else do (continue)
+                          finally (return hex)))
+                (char (adobe-japan1-to-unicode code)))
+           (and char (string char))))))
 
 (defun ucs-octets-to-plain-text (octets)
   (loop with string = (make-array 0 :element-type 'character :fill-pointer t :adjustable t)

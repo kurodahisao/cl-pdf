@@ -1,5 +1,7 @@
 ;;; -*- coding:cp932; syntax:common-lisp -*-
 
+(in-package "PDF")
+
 (defparameter +adobe-japan1-7-ordering+
   '((0 GENERIC NOTDEF NOTDEF) (1 PROPORTIONAL ROMAN SPACE)
     (2 PROPORTIONAL ROMAN EXCLAM) (3 PROPORTIONAL ROMAN QUOTEDBL)
