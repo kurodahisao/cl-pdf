@@ -954,6 +954,8 @@ CL-PDF(352): (jexample)
         (progn (vector-pop stack) (vector-pop stack))
       else if (equal "TD" token) do
         (progn (vector-pop stack) (vector-pop stack))
+      else if (equal "rg" token) do
+        (progn (vector-pop stack) (vector-pop stack) (vector-pop stack))
       else if (equal "T*" token) do
         (quote "Do Nothing")
       else do
