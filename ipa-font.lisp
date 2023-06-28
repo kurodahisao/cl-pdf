@@ -718,12 +718,12 @@ CL-PDF(352): (jexample)
 
 (defun assoc-string-to-font (font hashtable string)
   "string ‚ð font ‚É•R•t‚¯‚é."
+  (when (listp string)
+    (setq string (apply #'concatenate 'string string)))
   (let ((value (gethash font hashtable)))
-    (when (listp string)
-      (setq string (format nil "~{~A~}" string)))
     (when (listp value)
-      (setq value (format nil "~{~A~}" value)))
-    (setf (gethash font hashtable) (format nil "~@[~A~]~A" value string))))
+      (setq value (apply #'concatenate 'string value)))
+    (setf (gethash font hashtable) (concatenate 'string value string))))
 
 (defun read-texts-as-japan1-string (texts)
   (cond ((listp texts)
