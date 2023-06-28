@@ -18,8 +18,10 @@
   :maintainer "KURODA Hisao <littlelisper@pm.me>"
   :description "CL-PDF IPA Font Extension"
   :long-description "CL-PDF Extension for IPA Font Manipulation"
-  :components ((:file "ipa-font" :depends-on ()
+  :components ((:file "cl-pdf-patch" :depends-on ()
                       :encoding #+allegro :932 #-allegro :cp932)
                (:file "adobe-japan-1-7-ordering" :depends-on ()
+                      :encoding #+allegro :932 #-allegro :cp932)
+               (:file "ipa-font" :depends-on ()
                       :encoding #+allegro :932 #-allegro :cp932))
   :depends-on (:asdf-encodings :zpb-ttf2 :cl-pdf-parser :babel :cl-ppcre :flexi-streams #-allegro :deflate #-allegro :salza2))
