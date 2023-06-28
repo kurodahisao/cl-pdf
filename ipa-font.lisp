@@ -692,7 +692,8 @@ CL-PDF(352): (jexample)
           when (or (eql basefont-names t)
                    (loop for basename in basefont-names
                        thereis (search basename basefont)))
-          do (let ((string (cond ((search "Identity" encoding)
+          do ;; (format t ";; :encoding ~A :tounicode ~A : ordering ~A~%" encoding (not (not tounicode)) ordering)
+             (let ((string (cond ((search "Identity" encoding)
                                   (cond ((not (null tounicode))
                                          (read-texts-as-cid-string texts tounicode))
                                         ((search "UCS" ordering)
@@ -703,11 +704,13 @@ CL-PDF(352): (jexample)
                                          (error "Unknown Ordering ~A when Encoding is ~A." ordering encoding))))
                                  ((search "UTF16" encoding)
                                   (read-texts-as-ucs-string texts))
-                                 ((or (search "WinAnsi" encoding) (search "RKSJ" encoding))
+                                 ((search "RKSJ" encoding)
                                   (read-texts-as-plain-text texts :cp932)) ; call babel
+                                 ((search "WinAnsi" encoding)
+                                  (read-texts-as-plain-text texts :iso-8859-1)) ; call babel
                                  ((or (null encoding) (string= encoding "/StandardEncoding"))
                                   (read-texts-as-plain-text texts :cp932)) ; call babel
-                                 ((and (null encoding) (not (null tounicode)))
+                                 ((not (null tounicode))
                                   (read-texts-as-cid-string texts tounicode))
                                  (t (error "Unknown Pattern of Encoding ~A and ToUnicode ~A" encoding tounicode)))))
                (assoc-string-to-font fontobj font-text-hash-table string))
@@ -715,12 +718,12 @@ CL-PDF(352): (jexample)
 
 (defun assoc-string-to-font (font hashtable string)
   "string Ç font Ç…ïRïtÇØÇÈ."
-  (when (listp string)
-    (setq string (apply #'concatenate 'string string)))
   (let ((value (gethash font hashtable)))
+    (when (listp string)
+      (setq string (format nil "~{~A~}" string)))
     (when (listp value)
-      (setq value (apply #'concatenate 'string value)))
-    (setf (gethash font hashtable) (concatenate 'string value string))))
+      (setq value (format nil "~{~A~}" value)))
+    (setf (gethash font hashtable) (format nil "~@[~A~]~A" value string))))
 
 (defun read-texts-as-japan1-string (texts)
   (cond ((listp texts)
@@ -905,14 +908,22 @@ CL-PDF(352): (jexample)
           else if (equal "BT" token) append ; `ET'Ç‹Ç≈TextÇôdùæ
             (extract-contents-text stream)))))
 
+(defun full-vector-pop (stack)
+  ;; pop until stack is null
+  (let ((pops (loop for pop = (vector-pop stack)
+                  if (> (fill-pointer stack) 0) collect
+                    pop into pops
+                  else collect pop into pops and return pops)))
+    (apply #'concatenate 'string (reverse pops))))
+
 (defun extract-contents-text (stream)
   "`ET'Ç…èoçáÇ”Ç‹Ç≈TextÇôdùæÇ∑ÇÈ"
   (loop with fontname
       with stack = (make-array 0 :fill-pointer t :adjustable t)
       for token = (read-stream-token stream)
-      until (equal "ET" token)
+      until (or (null token) (equal "ET" token))
       if (equal "Tj" token) collect
-        (cons fontname (vector-pop stack)) into text-list
+        (cons fontname (full-vector-pop stack)) into text-list
       else if (equal "TJ" token) collect
         (cons fontname (vector-pop stack)) into text-list
       else if (equal "'" token) collect
@@ -1039,15 +1050,18 @@ CL-PDF(352): (jexample)
   (let ((contents (extract-page-contents page)))
     (if (vectorp contents)
         (loop for c across contents
-            collect (inflate-pdf-stream (content c)))
+            for content = (inflate-pdf-stream (content c))
+            if content collect content)
       (let* ((resource (dict-values (ensure-dictionary (extract-page-resource page))))
              (xobject (cdr (assoc "/XObject" resource :test #'string=))))
-        (if (and xobject (dict-values xobject))
-            (loop for xvalue in (dict-values xobject)
-                for object = (cdr xvalue)
-                collect (inflate-pdf-stream (content object)))
-          (unless (null contents)
-            (list (inflate-pdf-stream (content contents)))))))))
+        (or (if (and xobject (dict-values xobject))
+                (loop for xvalue in (dict-values xobject)
+                    for object = (cdr xvalue)
+                    for content = (inflate-pdf-stream (content object))
+                    if content collect content))
+            (unless (null contents)
+              (let ((content (inflate-pdf-stream (content contents))))
+                (if content (list content)))))))))
 
 (defun extract-page-contents (page)
   (cdr (assoc "/Contents" (dict-values (content page)) :test #'string=)))
@@ -1064,11 +1078,16 @@ CL-PDF(352): (jexample)
 (defun no-compression-of-pdf-stream (stream)
   (no-compression stream))
 
+(defun subtype-of-pdf-stream (stream)
+  (cdr (assoc "/Subtype" (dict-values stream) :test #'string=)))
+
 (defun inflate-pdf-stream (pdf-stream &optional (type :zlib))
   #-allegro (declare (ignore type))
   (let ((filter (filter-of-pdf-stream pdf-stream))
-        (content (content-of-pdf-stream pdf-stream)))
-    (cond ((null filter)
+        (content (content-of-pdf-stream pdf-stream))
+        (subtype (subtype-of-pdf-stream pdf-stream)))
+    (cond ((string= subtype "/Image") nil) ; We don't need image here
+          ((null filter)
            (format t ";; Inside non-filter file~%")
            (apply #'concatenate (type-of (first content)) content))
           ((string= filter "/FlateDecode")
@@ -1102,18 +1121,19 @@ CL-PDF(352): (jexample)
 (defun read-pdf-code-string (stream)
   (loop with string = (make-array 1  :initial-element #\< :element-type 'character :fill-pointer t :adjustable t)
       for c = (code-char (pseudo-read-byte stream))
-      until (eql c #\>) do
+      until (or (null c) (eql c #\>)) do
         (vector-push-extend c string)
       finally (progn (vector-push-extend #\> string)
                      (return string))))
 
 (defun read-byte-char (stream)
-  (code-char (pseudo-read-byte stream)))
+  (let ((byte (pseudo-read-byte stream)))
+    (and byte (code-char byte))))
 
-(defun read-pdf-char-string (stream)
-  (loop with string = (make-array 1 :element-type 'character :initial-element #\( :fill-pointer t :adjustable t)
-      for c = (read-byte-char stream)
-      until (eql c #\)) do
+(defun read-pdf-char-string (stream
+                             &optional (string (make-array 1 :element-type 'character :initial-element #\( :fill-pointer t :adjustable t)))
+  (loop for c = (read-byte-char stream)
+      until (or (null c) (eql c #\))) do
         (let ((ignore nil))
           (when (eql #\\ c)
             (setq c (read-byte-char stream))
@@ -1143,14 +1163,19 @@ CL-PDF(352): (jexample)
                    (code-char (read-from-string (format nil "#o~C~C~C" c0 c1 c2))))))
               (t (setq ignore t))))
           (when (null ignore)
-            (vector-push-extend c string)))
+            (vector-push-extend c string))
+          (when (eql c #\()             ; should not occur, but...
+            (setq c #\()
+            (warn "\"~A\" Neet backslash before ( or )?" string)
+            #+ignore                    ; recursive read-pdf-char-string
+            (read-pdf-char-string stream string)))
       finally (progn (vector-push-extend #\) string)
                      (return string))))
 
 (defun read-pdf-name (stream)
   (loop with string = (make-array 1 :initial-element #\/ :element-type 'character :fill-pointer t :adjustable t)
       for c = (code-char (pseudo-read-byte stream))
-      until (white-char-p c) do
+      until (or (null c) (white-char-p c)) do
         (vector-push-extend c string)
       finally (return string)))
 
@@ -1179,20 +1204,19 @@ CL-PDF(352): (jexample)
                 (prog1 *unread-byte* (setq *unread-byte* nil))))
 
 (defun read-stream-token (stream)
-  (let ((c (loop for c = (or (pseudo-read-byte stream nil nil)
+  (let ((c (loop for c = (or (read-byte-char stream)
                              (return-from read-stream-token nil))
-               while (white-char-p (code-char c))
+               while (white-char-p c)
                finally (return c))))
-    (case (code-char c)
+    (case c
       (#\[ (read-pdf-array stream))
       (#\] #\])
       (#\< (read-pdf-code-string stream))
       (#\( (read-pdf-char-string stream))
       (#\/ (read-pdf-name stream))
-      (t (loop with string = (make-array 1 :initial-element (code-char c) :element-type 'character :fill-pointer t :adjustable t)
-             for byte = (pseudo-read-byte stream nil nil)
-             for c = (if byte (code-char byte))
-             if (null byte) do
+      (t (loop with string = (make-array 1 :initial-element c :element-type 'character :fill-pointer t :adjustable t)
+             for c = (read-byte-char stream)
+             if (null c) do
                (return string)
              else if (or (white-char-p c) (key-char-p c)) do
                (unread-byte stream)
