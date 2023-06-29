@@ -1,5 +1,9 @@
 ;;; -*- coding:cp932; syntax:common-lisp -*-
 
+;;;
+;;; (c) copyright 2016 by KURODA Hisao (littlelisper@pm.me)
+;;;
+
 (in-package "PDF")
 
 (defparameter +adobe-japan1-7-ordering+
@@ -15370,7 +15374,7 @@
 
 #||
 
-(defun adobe-japan1-7-ordering (file)
+(defun read-adobe-japan1-7-ordering (file)
   "https://github.com/adobe-type-tools/Adobe-Japan1"
   (with-open-file (s file)
     (loop for line = (read-line s nil nil)
