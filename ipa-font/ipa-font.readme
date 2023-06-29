@@ -11,23 +11,23 @@ T
 CL-USER> (asdf:load-system :zpb-ttf2)
 T
 #+END_SRC
-** Load System ipa-font with cl-pdf
+** Load System :ipa-font with :cl-pdf
 #+BEGIN_SRC
 CL-USER> (ql:quickload :cl-pdf)
 ....
 (:CL-PDF)
-CL-USER> (load "~/projects/github/cl-pdf/ipa-font.asd")
+CL-USER> (load "~/projects/github/cl-pdf/ipa-font/ipa-font.asd")
 T
 CL-USER> (asdf:load-system :ipa-font)
 T
 #+END_SRC
 ** Run Examples
+- See https://github.com/archimag/cl-pdf/blob/master/unicode-readme.txt
+- Install IPA Fonts via https://moji.or.jp/ipafont/ipa00303/
+  - or Download both ufm & ttf via https://drive.proton.me/urls/13H5YBJ8E4#ZIKyxcEtKyDm
 #+BEGIN_SRC
-Install IPA Fonts via https://moji.or.jp/ipafont/ipa00303/
-See https://github.com/archimag/cl-pdf/blob/master/unicode-readme.txt
 # unzip http://www.fractalconcept.com/fcweb/download/ttf2pt1.zip
-$ c:/Users/kuroda/Dropbox/honda/ttf2pt1/ttf2pt1.exe -a -F c:/Windows/Fonts/ipam.ttf ipam
-or If you on a Linux platform, Download both ufm & ttf via https://drive.proton.me/urls/13H5YBJ8E4#ZIKyxcEtKyDm
+$ ttf2pt1.exe -a -F c:/Windows/Fonts/ipam.ttf ipam
 $ sbcl
 CL-USER> (in-package pdf)
 #<PACKAGE "PDF">
@@ -35,14 +35,14 @@ PDF> (load-ipa-font "ipam.ufm" "/usr/share/fonts/ipam.ttf")
 #<TTU-FONT-METRICS IPAMincho @ #x101cf7e22>
 PDF> (get-font "IPAMincho")
 #<FONT ipamincho @ #x102d96872>
-PDF> (jexample)    ; definition commented out at the end of ipa-font.lisp
+PDF> (jexample)
 #P"tmp.pdf"
 PDF> (with-open-file (s *) (file-length s))
-6479989
+5760342
 PDF> (remove-embedded-fonts "tmp.pdf" "tmp2.pdf")
 #P"tmp2.pdf"
 PDF> (with-open-file (s *) (file-length s))
-6610
+5202
 PDF> (pdf2text "tmp.pdf")
 ;; Inside inflate-file
 #<HASH-TABLE :TEST EQL :COUNT 1 {10024E5E83}>

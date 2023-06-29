@@ -1,4 +1,12 @@
-;;; -*- coding:cp932 -*-
+;;; -*- coding:cp932; syntax:common-lisp -*-
+;;; cl-pdf copyright 2002-2005 Marc Battyani see license.txt for the details
+;;; You can reach me at marc.battyani@fractalconcept.com or marc@battyani.net
+;;; The homepage of cl-pdf is here: http://www.fractalconcept.com/asp/html/cl-pdf.html
+
+;;;
+;;; (c) copyright 2016 by KURODA Hisao (littlelisper@pm.me)
+;;;
+
 (in-package "PDF")
 
 (defclass pseudo-font-object (object-ref)
@@ -9,12 +17,12 @@
     (unless font-object
       (let* ((font-name (format nil "/CLF~A" (name font)))
              (font-indirect-object (find-font-resources font-name)))
-        ;; If existing-document already has same font,
-        ;; it makes PSEUDO-FONT-OBJECT instead of FONT-OBJECT
+        ;; If the existing-document already has the same font,
+        ;; It will make PSEUDO-FONT-OBJECT instead of FONT-OBJECT.
         (if (null font-indirect-object)
             (progn
-              (setf font-object (make-instance 'font-object
-                                  :font font ; font has its unique name
+              (setf font-object (make-instance 'font-object :font font
+                                        ; font has own unique name
                                   :name font-name :embed embed))
               (push (cons font font-object) (fonts *document*)))
           (setf font-object (make-instance 'pseudo-font-object
@@ -24,7 +32,6 @@
     font-object))
 
 (defun add-font-to-page (font &key (embed *embed-fonts*))
-  ;; embed :default Ç≈ÇÕÇ»Ç≠ÅA*embed-fonts* Ç…únÇ”Ç‚Ç§Ç…ÇµÇΩ
   (let ((font-object (cdr (assoc font (fonts *page*)))))
     (unless font-object
       (setf font-object (find-font-object font :embed embed))
@@ -44,7 +51,7 @@
                                (length content)))))))
 
 ;;;
-;;; Follows are New Definitions by H.Kuroda
+;;; Follows are New Definitions
 ;;;
 
 (defun change-page-dict-value (page key new-value)

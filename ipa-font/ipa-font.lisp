@@ -956,6 +956,8 @@ CL-PDF(352): (jexample)
         (progn (vector-pop stack) (vector-pop stack))
       else if (equal "rg" token) do
         (progn (vector-pop stack) (vector-pop stack) (vector-pop stack))
+      else if (equal "RG" token) do
+        (progn (vector-pop stack) (vector-pop stack) (vector-pop stack))
       else if (equal "T*" token) do
         (quote "Do Nothing")
       else do
@@ -1169,7 +1171,7 @@ CL-PDF(352): (jexample)
             (vector-push-extend c string))
           (when (eql c #\()             ; should not occur, but...
             (setq c #\()
-            (warn "\"~A\" Neet backslash before ( or )?" string)
+            (warn "\"~A\" Need backslash before ( or )?" string)
             #+ignore                    ; recursive read-pdf-char-string
             (read-pdf-char-string stream string)))
       finally (progn (vector-push-extend #\) string)
@@ -1231,8 +1233,6 @@ CL-PDF(352): (jexample)
 ;;;; Examples
 ;;;;
 
-#||
-
 (defparameter +sample-string-list+
     '(" !@#$%^&*()_+"
       "Å@ÅIÅóÅîÅêÅìÅOÅïÅñÅiÅjÅQÅ{ÅbÅ®"
@@ -1277,4 +1277,25 @@ CL-PDF(352): (jexample)
                  (rotate 13)))))
     (write-document file)))
 
-||#
+(defun jexample9 (&optional (file #P"tmp.pdf" filep))
+  (flet ((write-text ()
+           (let ((mincho (get-font "IPAMincho")))
+             (loop with x = 0
+                 for y from 800 by 40 downto 0
+                 for text in +sample-string-list+
+                 do (in-text-mode
+                     (set-font mincho 36.0)
+                     (move-text x y)
+                     (draw-text text))))))
+    (if filep
+        (with-existing-document (file)
+          (loop for i from 0
+              for page across (pages (root-page *document*))
+              do (with-existing-page (i)
+                   (write-text)))
+          (write-document file))
+      (with-document ()
+        (with-page ()
+          (with-outline-level ("Example" (register-page-reference))
+            (write-text)))
+        (write-document file)))))
