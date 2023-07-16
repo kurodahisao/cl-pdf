@@ -1,0 +1,19 @@
+# -*- mode:org; truncate-lines:nil; coding:iso-2022-jp -*-
+* 2023-07-16
+** Debian12
+Debian12 は色々問題が多いため Linux Platform を Debian11に乘り換へる。
+*** slime
+apt-getの版では動かない
+*** latex
+apt-getの版では動かない
+** Debian11
+*** git-el
+Magitを使へとerrorを吐く大きな御世話。今迄使ってきたgit.elとgit-blame.elをcopyして來る。
+*** oyamoji.lisp
+oyamoji.lispを =git add=.
+*** ipa-font.asd
+oyamoji.lispに合はせて變更。
+*** meiji-bible
+箴言をLaTeXcompileし、文字の拔き出し、親文字揃へともに一應動いてくれてゐる。
+*** changelog
+このchagelogを =git add=.
