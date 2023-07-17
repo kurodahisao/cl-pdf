@@ -179,6 +179,16 @@
   (prog1 (line-adjust-ruby-aux buffer head-y bottom-1 bottom-2 ruby-size)
     (setf (fill-pointer buffer) 0)))
 
+(defun dakuten-p (token)
+  (or (equal token '("<0283>")) ; 濁點と半濁點
+      (equal token '("<0284>"))))
+
+(defun odoriji-p (token)
+  (or (equal token '("<2f4a>"))         ; 踊り字と變體假名の場合、
+      (equal token '("<ee6d>")) ; 次に濁點が來る可能性があるので覺えておく
+      ;; (equal token '("<07d8>"))
+      (equal token '("<ee0dee6d>"))))
+
 (defun line-adjust-ruby-aux (buffer head-y bottom-1 bottom-2 ; 底位置(二段組上下)
                              ruby-size)
   (let ((adjust-p nil)
@@ -193,17 +203,13 @@
                     (upper (+ bottom-line (/ ruby-size 2)))
                     (bottom-exceed-p (and (= ruby-size *font-size*)
                                           (< lower char-bottom upper)))
-                    (dakuten-p (and odoriji-p (or (equal first '("<0283>")) ; 濁點と半濁點
-                                                  (equal first '("<0284>")))))
+                    (dakuten-p (and odoriji-p (dakuten-p first)))
                     (proceed-p (or (and adjust-p dakuten-p) ; adjust直後の濁點
                                    (and (not adjust-p) bottom-exceed-p))))
                (assert (not (and (not adjust-p) dakuten-p bottom-exceed-p)))
                                         ; adjust無しに濁點だけ底をはみ出ることは無い筈
                (if (and (not adjust-p)
-                        (or (equal first '("<2f4a>")) ; 踊り字と變體假名の場合、
-                            (equal first '("<ee6d>")) ; 次に濁點が來る可能性があるので覺えておく
-                            (equal first '("<07d8>"))
-                            (equal first '("<ee0dee6d>"))))
+                        (odoriji-p first))
                    (setq odoriji-p t)
                  (setq odoriji-p nil))
                (when proceed-p
@@ -367,6 +373,30 @@
 
 (defun not-oyamoji-p (token)
   "位置調整不要な例外的なものをここに竝べる"
+  (let ((real-token (loop for tok in token
+                          unless (or (char/= #\< (aref tok 0)) ; 文字でない
+                                     (equal "<0279>" tok))     ; space
+                            collect tok)))
+    (if (null real-token)
+        (values t nil)                  ; 文字なし
+      (let ((last-token (first (last real-token))))
+        (loop with value
+              for i from 2 below (length last-token)
+              do (multiple-value-setq (value i)
+                   (parse-integer last-token :start (- i 1) :end (+ i 3) :radix 16))
+                 (when (or (<= 12269 value 12868) ; HIRAGANA KATAKANA
+                           (<= 20587 value 21070) ; ALPHANUM
+                           (<= 515 value 1124)    ; HIRAGANA KATAKANA
+                           (<= 7887 value 7960)   ; DINGBATS
+                           (<= 12063 value 12268) ; DINGBATS
+                           (<= 9276 value 9779)   ; GENERICROT
+                           (<= 20587 value 21070)) ; ALPHANUM
+                   (return (values t t)))
+              finally (return (values nil t)))))))
+
+#+ignore
+(defun not-oyamoji-2-p (token)
+  "位置調整不要な例外的なものをここに竝べる"
   (let ((last-token (first (last token))))
     (or (equal last-token "<30e1>")     ; ふ
         (equal last-token "<30f8>")     ; れ
@@ -381,7 +411,6 @@
         (and (equal (first (last token 3)) "<1edc>") ; ）
              (equal last-token "<0279>"))
                                         ;  .....
-        #+ignore
         (or                             ; 以下「西方の人」試驗不十分
          (equal last-token "<30ad>")
          (equal last-token "<30af>")
@@ -398,7 +427,9 @@
         )))
 
 (defun oyamoji-p (token)
-  (not (not-oyamoji-p token)))
+  (multiple-value-bind (not-oyamoji-p mojip)
+      (not-oyamoji-p token)
+    (and mojip (not not-oyamoji-p))))
 
 (defun line-adjust-oyamoji-aux (buffer head-y bottom-1 bottom-2 ; 底位置(二段組上下)
                                 ruby-size oyamoji-size)
