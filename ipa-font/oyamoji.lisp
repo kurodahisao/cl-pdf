@@ -371,29 +371,6 @@
       (setf (aref buffer (- length 10))
         (append (aref buffer (- length 10)) '("<0279>"))))))
 
-(defun not-oyamoji-p (token)
-  "位置調整不要な例外的なものをここに竝べる"
-  (let ((real-token (loop for tok in token
-                          unless (or (char/= #\< (aref tok 0)) ; 文字でない
-                                     (equal "<0279>" tok))     ; space
-                            collect tok)))
-    (if (null real-token)
-        (values t nil)                  ; 文字なし
-      (let ((last-token (first (last real-token))))
-        (loop with value
-              for i from 2 below (length last-token)
-              do (multiple-value-setq (value i)
-                   (parse-integer last-token :start (- i 1) :end (+ i 3) :radix 16))
-                 (when (or (<= 12269 value 12868) ; HIRAGANA KATAKANA
-                           (<= 20587 value 21070) ; ALPHANUM
-                           (<= 515 value 1124)    ; HIRAGANA KATAKANA
-                           (<= 7887 value 7960)   ; DINGBATS
-                           (<= 12063 value 12268) ; DINGBATS
-                           (<= 9276 value 9779)   ; GENERICROT
-                           (<= 20587 value 21070)) ; ALPHANUM
-                   (return (values t t)))
-              finally (return (values nil t)))))))
-
 #+ignore
 (defun not-oyamoji-2-p (token)
   "位置調整不要な例外的なものをここに竝べる"
@@ -425,6 +402,34 @@
          (equal last-token "<1ecf>")
          (equal last-token "<1ed01ed41ed4>"))
         )))
+
+(defun token-char-code-list (token)
+  "token列を文字コードの列にする"
+  (loop for tok in token
+        when (char= #\< (aref tok 0)) ; 文字
+          append
+          (loop with value
+              for i from 2 below (length tok)
+              do (multiple-value-setq (value i)
+                   (parse-integer tok :start (- i 1) :end (+ i 3) :radix 16))
+                collect value)))
+
+(defun not-oyamoji-p (token)
+  "位置調整不要な例外的なものをここに竝べる"
+  (let* ((code-list (token-char-code-list token))
+         (char-code-list (remove #x0279 code-list))) ; 空白無視
+    (if (null char-code-list)
+        (values t nil)                ; 親文字 (漢字) ではないが、文字でもない
+      (let ((code (first (last char-code-list))))
+        (if (or (<= 12269 code 12868)    ; HIRAGANA KATAKANA
+                (<= 20587 code 21070)    ; ALPHANUM
+                (<= 515 code 1124)       ; HIRAGANA KATAKANA
+                (<= 7887 code 7960)      ; DINGBATS
+                (<= 12063 code 12268)    ; DINGBATS
+                (<= 9276 code 9779)      ; GENERICROT
+                (<= 20587 code 21070))   ; ALPHANUM
+            (values t t)                 ; 親文字 (漢字) 以外の文字
+          (values nil t))))))            ; 恐らく親文字 (漢字) 
 
 (defun oyamoji-p (token)
   (multiple-value-bind (not-oyamoji-p mojip)
