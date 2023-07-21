@@ -1,19 +1,30 @@
-# -*- mode:org; truncate-lines:nil; coding:iso-2022-jp -*-
+# -*- mode:org; truncate-lines:nil; coding:utf-8 -*-
 * 2023-07-16
 ** Debian12
-Debian12 $B$O?'!9LdBj$,B?$$$?$a(B Linux Platform $B$r(B Debian11$B$KP+$j49$X$k!#(B
+Debian12 は色々問題が多いため Linux Platform を Debian11に乘り換へる。
 *** slime
-apt-get$B$NHG$G$OF0$+$J$$(B
+apt-getの版では動かない
 *** latex
-apt-get$B$NHG$G$OF0$+$J$$(B
+apt-getの版では動かない
 ** Debian11
 *** git-el
-Magit$B$r;H$X$H(Berror$B$rEG$/Bg$-$J8f@$OC!#:#Kx;H$C$F$-$?(Bgit.el$B$H(Bgit-blame.el$B$r(Bcopy$B$7$FPT$k!#(B
+Magitを使へとerrorを吐く大きな御世話。今迄使ってきたgit.elとgit-blame.elをcopyして來る。
 *** oyamoji.lisp
-oyamoji.lisp$B$r(B =git add=.
+oyamoji.lispを =git add=.
 *** ipa-font.asd
-oyamoji.lisp$B$K9g$O$;$FZN99!#(B
+oyamoji.lispに合はせて變更。
 *** meiji-bible
-$Bd>8@$r(BLaTeXcompile$B$7!"J8;z$NY6$-=P$7!"?FJ8;zB7$X$H$b$K0lXfF0$$$F$/$l$F$p$k!#(B
+箴言をLaTeXcompileし、文字の拔き出し、親文字揃へともに一應動いてくれてゐる。
 *** changelog
-$B$3$N(Bchagelog$B$r(B =git add=.
+このchagelogを =git add=.
+* 2023-07-21
+** HENTAIGANA
+pdf2textで變體假名が取れるやうにした。
+#+BEGIN_SRC
+CL-USER> (pdf:pdf2text "/mnt/chromeos/MyFiles/Downloads/meiji-new-testament.pdf" :page-numbers '(8))
+.......
+#<HASH-TABLE :TEST EQL :COUNT 5 {1006DC69D3}>
+("馬太傳音書第五" ""
+ "一二イエスヨハネ　とらは囚　れし　こと事　を　き聞　てガリラヤに　き往　一三ナザレを　さり去 ........　でし弟子　　たち等　も　その其　　もと下　に　きた來　れり二イエス　くち口　を　ひらき啓　て　かれ彼　　ら等　に　をし釄　へ　いひ曰　ける三　ころ心　の　まづ貧　しき　もの者　　さいはひ　り　てん天　　こく國　　すなは即　ち　その其　　ひと人　の　もの有　なれ゛　なり也　四　かなし哀　む　もの者　　さいはひ　り　その其　　ひと人　　なぐさめ安慰　を　う得　べけれ゛　なり也　五　にう柔　　わ和　なる　もの者　　さいはひ　り　その其　　ひと人　　ち地　を　つぐ嗣　ことを　う得　べけれ゛　なり也　六　うゑ餓　　かわく渇　ごとく　ぎ義　を　たふ慕　　もの者　　さいはひ　り　その其　　ひと人　　あく飽　ことを　う得　べけれ゛　なり也　七　あはれみ矜恤　ある　もの者　　さいはひ　り　その其　　ひと人　　あはれみ矜恤　を　う得　べけれ゛　なり也　八　ころ心　の　きよ　き　もの者　　さいはひ　り　その其　　ひと人　　かみ　を　みる見　ことを　う得　べけれ゛　なり也　九　やはらぎ和平　を　もとむ求　る　もの者　　さいはひ　り　その其　　ひと人　　かみ　の　こ子　と　となへ稱　らる　べけ可　れ゛なり一〇　た゛しき義　ことの　ため爲　に　せめ責　らる　もの者　　さいはひ　り　てん天　　こく國　　すなは即　ち"
+"𛂜𛃥𛂦𛂞𛁈𛁈𛂁𛂞𛃥𛁚𛂞𛂁𛂞𛁈𛁈𛁈𛀙𛂞𛂞𛃥𛂞𛁈𛂞𛂞𛂞𛂁𛂞𛂞𛂞𛂁𛂞𛂞𛂞𛂁𛂞𛂞𛁈𛂞𛂁𛂞𛂞𛂞𛂁𛂞𛂞𛂞𛂁𛂞𛂞𛂞𛂁𛂞𛂞𛂞𛂁𛂞" "9")
+#+END_SRC
