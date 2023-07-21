@@ -813,6 +813,15 @@ CL-PDF(352): (jexample)
                (vector-push-extend (code-char code) string))))
       finally (return string)))
 
+(defun integer-to-octets (integer)
+  (let ((string (format nil "~X" integer)))
+    (string-2byte-code-to-octets string)))
+
+(defun extended-code-char (code)
+  (if (> code #xffff)
+      (char (ucs-string-to-plain-text (integer-to-octets code)) 0)
+    (code-char code)))
+
 (defun cid-octets-to-plain-text-2 (octets tounicode)
   (loop with *read-base* = 16
       with string = (make-array 0 :element-type 'character :fill-pointer t :adjustable t)
@@ -823,8 +832,8 @@ CL-PDF(352): (jexample)
            (loop for uelm in tounicode
                for code1 = (first uelm)
                for code2 = (if (= (length uelm) 3) (second uelm) code1)
-               for src1 = (read-from-string code1 nil nil :start 1 :end 5)
-               for src2 = (read-from-string code2 nil nil :start 1 :end 5)
+               for src1 = (read-from-string code1 nil nil :start 1 :end (1- (length code1)))
+               for src2 = (read-from-string code2 nil nil :start 1 :end (1- (length code2)))
                when (<= src1 code src2) return
                  ;; http://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/pdf_reference_1-7.pdf
                  ;; P. 474-475
@@ -833,11 +842,11 @@ CL-PDF(352): (jexample)
                          (if (listp lastelm)
                              (let* ((m (- code src1))
                                     (unicode (nth m lastelm)))
-                               (+ (read-from-string unicode nil nil :start 1 :end 5)))
+                               (+ (read-from-string unicode nil nil :start 1 :end (1- (length unicode)))))
                            (let ((unicode lastelm))
-                             (+ (read-from-string unicode nil nil :start 1 :end 5)
+                             (+ (read-from-string unicode nil nil :start 1 :end (1- (length unicode)))
                                 (- code src1))))))
-                   (vector-push-extend (code-char dest) string))
+                   (vector-push-extend (extended-code-char dest) string))
                finally (warn "CID: (~A . ~A) = <~4,'0X> Cannot Decode." oct0 oct1 code)))
       finally (return string)))
 
