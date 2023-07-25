@@ -522,23 +522,40 @@
 
 (defun pdf-guess-line-bottom (input &key (start-page 2) (end-page 2))
   "親文字揃へ: parse-errorがあればpdfuniteに食はせる"
-  (let* ((input (get-canonicalized-pdf input))
-         (font-count (pdf-guess-oyamoji-size input :start-page start-page :end-page end-page))
-         (oyamoji-size (first (first font-count))))
-    (pdf-guess-line-bottom-aux input oyamoji-size  :start-page start-page :end-page end-page)))
-
-(defun pdf-guess-line-bottom-aux (input oyamoji-size &key (start-page 2) (end-page 2))
-  "親文字揃へ: dvipdfmxの出力をpdfuniteに食はせてから使ふこと"
   (with-existing-document (input)
-    (let ((pages (pages (root-page *document*))))
-      (loop with *min-y* = 0
-          for page across pages
-          for *page-count* from 1
-          when (<= start-page *page-count* end-page) do
-            (page-guess-line-bottom page oyamoji-size)
-          finally (return (- *min-y* oyamoji-size))))))
+    (let* ((input (get-canonicalized-pdf input))
+           (font-count (pdf-guess-oyamoji-size input :start-page start-page :end-page end-page))
+           (oyamoji-size (first (first font-count)))
+           (line-and-page-list      ; 先づ行を數へて一番多い頁だけを對象とする
+            (loop for page from start-page to end-page
+               collect (cons (pdf-count-page-lines oyamoji-size :start-page page :end-page page) page)))
+           (line-and-page (first (sort line-and-page-list #'> :key #'car)))
+           (line-count (car line-and-page))
+           (page (cdr line-and-page))
+           (min-y-1 ; 行の半分（上段部分）を走査
+            (pdf-guess-line-bottom-aux oyamoji-size :start-page page :end-page page :end-line (/ (1- line-count) 2)))
+           (min-y-2 ; 全体（下段部分）を走査
+            (pdf-guess-line-bottom-aux oyamoji-size :start-page page :end-page page)))
+      (values min-y-1 min-y-2))))
 
-(defun page-guess-line-bottom (page oyamoji-size)
+(defun pdf-count-page-lines (oyamoji-size &key (start-page 2) (end-page 2) (end-line 1000))
+  (multiple-value-bind (min count)
+      (pdf-guess-line-bottom-aux oyamoji-size :start-page start-page :end-page end-page :end-line end-line)
+    (declare (ignore min))              ; 多値の二つ目だけを返す
+    count))
+
+(defun pdf-guess-line-bottom-aux (oyamoji-size &key (start-page 2) (end-page 2) (end-line 80))
+  "親文字揃へ位置推定: 上段と下段の二値を返す"
+  (let ((pages (pages (root-page *document*))))
+    (loop with *min-y* = 0
+       with *line-count* = 0
+       for page across pages
+       for *page-count* from 1
+       when (<= start-page *page-count* end-page) do
+         (page-guess-line-bottom page oyamoji-size :end-line end-line)
+       finally (return (values (- *min-y* oyamoji-size) *line-count*)))))
+
+(defun page-guess-line-bottom (page oyamoji-size &key (end-line 80))
   "PDF Page の text を親文字揃へする."
   (let ((contents (extract-page-contents page)))
     (assert (vectorp contents))
@@ -547,7 +564,7 @@
         for c across contents
         for pdf-stream = (content c)
         for origin = (inflate-pdf-stream pdf-stream)
-        do (content-guess-line-bottom origin oyamoji-size))))
+        do (content-guess-line-bottom origin oyamoji-size :end end-line))))
 
 (defun content-guess-line-bottom (input-buffer oyamoji-size &key (start 0) (end 80))
   (flet ((compute-pdf-token-tj (token stack)
@@ -584,8 +601,7 @@
              (declare (ignore first))
              (setq *font-size* (read-from-string second)))))
     (with-input-from-buffer (input input-buffer)
-      (loop with *line-count* = 0
-          with stack = (make-array 0 :fill-pointer t :adjustable t)
+      (loop with stack = (make-array 0 :fill-pointer t :adjustable t)
           for token = (read-stream-token input)
           while (and (<= start *line-count* end)
                      (not (null token)))
@@ -599,7 +615,7 @@
             (compute-pdf-token-td token stack)
           else do
                (vector-push-extend token stack)
-          finally (return *min-y*)))))
+          finally (return (values *min-y* *line-count*))))))
 
 ;;;
 
