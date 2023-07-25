@@ -33,7 +33,7 @@
         (with-existing-document (input)
           ())                           ; do nothing
         input)
-    (parse-error (cond)
+    (pdf-parse-error (cond)
       (declare (ignore cond))
       (let ((temp (make-temp-file-name)))
         (unite-pdf-files (probe-file input) temp)
