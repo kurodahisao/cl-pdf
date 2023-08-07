@@ -670,6 +670,20 @@
                (vector-push-extend token stack)
           finally (return hash-table)))))
 
+;;; For Debug
+(defun token-to-string (token)
+  (if (listp token)
+      (loop for tok in token
+         append (token-to-string tok))
+      (unless (numberp token)
+        (if (symbolp token) (setq token (string token)))
+        (let* ((cid-list
+                (loop with *read-base* = 16
+                   for i from 1 by 4 below (1- (length token))
+                   collect (read-from-string token nil nil :start i :end (+ i 4))))
+               (code-list (loop for cid in cid-list collect (adobe-japan1-to-unicode cid))))
+          code-list))))
+
 (defparameter +pdf2pdf+ "gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=~A -c .setpdfwrite -f ~A")
 (defun pdf2pdf (pdf)
   "Canonicalize PDF"
