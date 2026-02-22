@@ -23,7 +23,7 @@
   #+allegro
   (run-shell-command (format nil +pdfunite+ (mapcar #'escape-pathname files)) :show-window nil)
   #+sbcl
-  (uiop:run-program (format nil +pdfunite+ (mapcar #'escape-pathname files))
+  (uiop:run-program (format nil +pdfunite+ (mapcar #'escape-pathname files))))
 
 (defun unite-pdf-files (&rest files)
   (apply #'unite-pdf-command files))
