@@ -16,14 +16,14 @@
       finally (return result))
   #+mswindows                           ; allegro
   (format nil "\"~A\"" string)
-  #+os-windows                          ; sbcl
+  #+(or os-windows os-unix)             ; sbcl
   (format nil "~A" string))
 
 (defun unite-pdf-command (&rest files)
   #+allegro
   (run-shell-command (format nil +pdfunite+ (mapcar #'escape-pathname files)) :show-window nil)
   #+sbcl
-  (uiop:run-program (format nil +pdfunite+ (mapcar #'escape-pathname files))
+  (uiop:run-program (format nil +pdfunite+ (mapcar #'escape-pathname files))))
 
 (defun unite-pdf-files (&rest files)
   (apply #'unite-pdf-command files))
