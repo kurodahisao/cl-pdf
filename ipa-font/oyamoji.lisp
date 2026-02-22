@@ -14,11 +14,16 @@
         (vector-push-extend #\\ result)
       do (vector-push-extend char result)
       finally (return result))
-  #+mswindows
-  (format nil "\"~A\"" string))
+  #+mswindows                           ; allegro
+  (format nil "\"~A\"" string)
+  #+os-windows                          ; sbcl
+  (format nil "~A" string))
 
 (defun unite-pdf-command (&rest files)
-  (run-shell-command (format nil +pdfunite+ (mapcar #'escape-pathname files)) :show-window nil))
+  #+allegro
+  (run-shell-command (format nil +pdfunite+ (mapcar #'escape-pathname files)) :show-window nil)
+  #+sbcl
+  (uiop:run-program (format nil +pdfunite+ (mapcar #'escape-pathname files))
 
 (defun unite-pdf-files (&rest files)
   (apply #'unite-pdf-command files))
@@ -456,7 +461,7 @@
                           (= oyamoji-size *font-size*) ; çsññÇ™ãÛÇ≈ñÑÇﬂÇÍÇÁÇƒÇÓÇ∆Ç´ÇÃô|íu:
                           (<= (abs diff) 1)) ; Ç“Ç¡ÇΩÇËùæÇ‹Ç¡ÇƒÇÓÇÈÇ™ÅA
                  (let ((pad (token-end-with-space first))) ; tokenÇÃç≈å„Ç…ãÛîíÇ™ñÑÇﬂÇÁÇÍÇƒÇÓÇÈ
-                   (when (and pad (> pad -999))
+                   (when (and pad (/= pad 0) (> pad -999))
                      (setq bottom-float-p t
                            diff (* oyamoji-size (/ (+ 1000 pad) 1000.0)))
                      (warn "Exceptional Case for ~A ~A at (~A ~A)." first pad *page-count* *line-count*))))
